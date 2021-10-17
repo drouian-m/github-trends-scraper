@@ -9,6 +9,7 @@ This project extract trends project list from Github trending page.
 ## TODO (experimentation list)
 
 - [x] Web Scraping
+- [x] Learn how to test rust project
 - [ ] API Implementation
 - [ ] CLI
 - [ ] Bot (telegram, slack ...)
