@@ -3,10 +3,20 @@ use regex::Regex;
 use select::document::Document;
 use select::predicate::{Class, Name, Predicate};
 
+#[derive(Debug)]
+struct Project {
+    title: String,
+    description: String,
+    link: String,
+    stars: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let html_content = call_github("rust").await?;
-    trending_scrapper(html_content);
+    let projects = trending_scrapper(html_content);
+    println!("Rust github trends : ");
+    println!("{:?}", projects);
     Ok(())
 }
 
@@ -18,23 +28,31 @@ async fn call_github(language: &str) -> Result<String, Box<dyn Error>> {
 }
 
 /// Extract trending projects from html content
-fn trending_scrapper(html_content: String) {
+fn trending_scrapper(html_content: String) -> Vec<Project>{
     let document = Document::from_read(html_content.as_bytes()).unwrap();
     let re = Regex::new(r"(\n|\s)+").unwrap();
+
+    let mut results: Vec<Project> = Vec::new();
     for node in document.find(Class("Box-row")) {
         let title = node.find(Class("h3")).next().unwrap().text();
-        println!("title : {:?}", re.replace_all(&title, ""));
+        let stars = node.find(Class("mt-2").descendant(Name("a"))).next().unwrap().text();
+        let link: String = node.find(Class("h3").descendant(Name("a"))).next().unwrap().attr("href").unwrap().parse().unwrap();
 
+        let mut description: String = String::from("");
         let description_node = node.find(Class("col-9")).next();
         if !description_node.is_none() {
-            let description = description_node.unwrap().text();
-            println!("description : {:?}", description.trim());
+            description = description_node.unwrap().text();
         }
 
-        let stars = node.find(Class("mt-2").descendant(Name("a"))).next().unwrap().text();
-        println!("stars : {:?}", re.replace_all(&stars, ""));
+        let project = Project{
+            title: re.replace_all(&title, "").parse().unwrap(),
+            description: description.trim().parse().unwrap(),
+            link,
+            stars: re.replace_all(&stars, "").parse().unwrap(),
+        };
 
-        let link = node.find(Class("h3").descendant(Name("a"))).next().unwrap().attr("href").unwrap();
-        println!("link : {:?}", link);
+        results.push(project);
     }
+
+    return results;
 }
