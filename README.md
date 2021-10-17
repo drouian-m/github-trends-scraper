@@ -2,6 +2,10 @@
 
 My Rust sandbox project.
 
+## Descrption
+
+This project extract trends project list from Github trending page.
+
 ## TODO (experimentation list)
 
 - [x] Web Scraping
