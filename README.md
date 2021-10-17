@@ -10,7 +10,8 @@ This project extract trends project list from Github trending page.
 
 - [x] Web Scraping
 - [x] Learn how to test rust project
-- [ ] API Implementation
+- [x] API Implementation
+- [ ] Project architecture => created dedicated api and scraper modules / files
 - [ ] CLI
 - [ ] Bot (telegram, slack ...)
 

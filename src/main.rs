@@ -1,9 +1,11 @@
-use std::error::Error;
+use actix_web::{get, web, App, HttpServer, HttpResponse, Responder};
 use regex::Regex;
 use select::document::Document;
 use select::predicate::{Class, Name, Predicate};
+use serde::{Serialize};
+use serde_json::Value;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 struct Project {
     title: String,
     description: String,
@@ -11,17 +13,70 @@ struct Project {
     stars: String,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-    let html_content = call_github("rust").await?;
-    let projects = trending_scrapper(html_content);
-    println!("Rust github trends : ");
-    println!("{:?}", projects);
-    Ok(())
+#[derive(Debug, Serialize)]
+struct Results {
+    projects: Vec<Project>
 }
 
-/// Get trending informations from github webpage
-async fn call_github(language: &str) -> Result<String, Box<dyn Error>> {
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            .service(root)
+            .service(trends)
+            .service(lang_trends)
+    })
+        .bind("127.0.0.1:8080")?
+        .run()
+        .await
+}
+
+#[get("/")]
+async fn root() -> impl Responder {
+    let data = r#"
+        [{
+            "url": "http://localhost:8080/trends",
+            "title": "Github root trends"
+        }, {
+            "url": "http://localhost:8080/trends",
+            "title": "Projects language trends results"
+        }]"#;
+    let v: Value = serde_json::from_str(data).unwrap();
+    HttpResponse::Ok().json(v)
+}
+
+#[get("/trends")]
+async fn trends() -> impl Responder {
+    let data = r#"
+        {
+            "languages": {
+                "values": ["rust", "javascript", "go", "python", "typescript", "..."],
+                "example": "http://localhost:8080/trends/rust"
+            }
+        }"#;
+    let v: Value = serde_json::from_str(data).unwrap();
+    HttpResponse::Ok().json(v)
+}
+
+
+#[get("/trends/{lang}")]
+async fn lang_trends(lang: web::Path<String>) -> impl Responder {
+    let result = call_github(&lang).await;
+    return match result {
+        Ok(html_content) => {
+            let projects = trending_scrapper(html_content);
+            HttpResponse::Ok().json(projects)
+        },
+        Err(err) => {
+            eprint!("{}", err);
+            HttpResponse::InternalServerError()
+                .body("Error trying to read trending")
+        }
+    }
+}
+
+/// Get trending infos from github webpage
+async fn call_github(language: &String) -> Result<String, reqwest::Error> {
     let url = format!("https://github.com/trending/{lang}", lang = language);
     let body = reqwest::get(&url).await?.text().await?;
     Ok(body)
