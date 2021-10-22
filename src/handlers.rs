@@ -1,7 +1,6 @@
-use super::scraper;
+use crate::scraper;
 use actix_web::{get, web, HttpResponse, Responder};
 use serde_json::Value;
-
 
 #[get("/")]
 pub async fn root() -> impl Responder {
@@ -30,7 +29,6 @@ pub async fn trends() -> impl Responder {
     HttpResponse::Ok().json(v)
 }
 
-
 #[get("/trends/{lang}")]
 pub async fn lang_trends(lang: web::Path<String>) -> impl Responder {
     let result = scraper::call_github(&lang).await;
@@ -38,11 +36,10 @@ pub async fn lang_trends(lang: web::Path<String>) -> impl Responder {
         Ok(html_content) => {
             let projects = scraper::trending_scrapper(html_content);
             HttpResponse::Ok().json(projects)
-        },
+        }
         Err(err) => {
             eprint!("{}", err);
-            HttpResponse::InternalServerError()
-                .body("Error trying to read trending")
+            HttpResponse::InternalServerError().body("Error trying to read trending")
         }
-    }
+    };
 }
