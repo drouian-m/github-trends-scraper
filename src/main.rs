@@ -1,7 +1,7 @@
 mod handlers;
 mod models;
 mod scraper;
-mod utils;
+mod cli;
 
 use actix_web::{App, HttpServer};
 use structopt::StructOpt;
@@ -11,14 +11,18 @@ use structopt::StructOpt;
 struct Cli {
     /// The path to the file to read
     #[structopt(short, long)]
-    runtime: std::path::PathBuf,
+    runtime: Option<String>,
+
+    #[structopt(short, long, required_if("runtime", "cli"))]
+    language: Option<String>,
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = Cli::from_args();
-    let runtime = utils::path_buf_to_str(&args.runtime).unwrap();
-    match runtime {
+    let runtime = args.runtime.unwrap();
+
+    match runtime.as_str() {
         "web" => {
             HttpServer::new(|| {
                 App::new()
@@ -31,7 +35,8 @@ async fn main() -> std::io::Result<()> {
             .await
         }
         "cli" => {
-            println!("WIP...");
+            let language = args.language.unwrap();
+            cli::get_projects(&language).await;
             Ok(())
         }
         "bot" => {

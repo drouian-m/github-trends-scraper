@@ -31,10 +31,9 @@ pub async fn trends() -> impl Responder {
 
 #[get("/trends/{lang}")]
 pub async fn lang_trends(lang: web::Path<String>) -> impl Responder {
-    let result = scraper::call_github(&lang).await;
+    let result = scraper::get_trends(&lang).await;
     return match result {
-        Ok(html_content) => {
-            let projects = scraper::trending_scrapper(html_content);
+        Ok(projects) => {
             HttpResponse::Ok().json(projects)
         }
         Err(err) => {

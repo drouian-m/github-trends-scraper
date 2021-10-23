@@ -12,7 +12,7 @@ This project extract trends project list from Github trending page.
 - [x] Learn how to test rust project
 - [x] API Implementation
 - [x] Project architecture => created dedicated api and scraper modules / files
-- [ ] CLI
+- [x] CLI
 - [ ] Bot (telegram, slack ...)
 
 ## Development

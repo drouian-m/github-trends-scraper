@@ -3,15 +3,26 @@ use regex::Regex;
 use select::document::Document;
 use select::predicate::{Class, Name, Predicate};
 
+pub async fn get_trends(language: &String) -> Result<Vec<Project>, reqwest::Error> {
+  let result = call_github(&language).await;
+  return match result {
+      Ok(html_content) => {
+          let projects = trending_scrapper(html_content);
+          Ok(projects)
+      }
+      Err(err) => Err(err)
+  };
+}
+
 /// Get trending infos from github webpage
-pub async fn call_github(language: &String) -> Result<String, reqwest::Error> {
+async fn call_github(language: &String) -> Result<String, reqwest::Error> {
   let url = format!("https://github.com/trending/{lang}", lang = language);
   let body = reqwest::get(&url).await?.text().await?;
   Ok(body)
 }
 
 /// Extract trending projects from html content
-pub fn trending_scrapper(html_content: String) -> Vec<Project> {
+fn trending_scrapper(html_content: String) -> Vec<Project> {
   let document = Document::from_read(html_content.as_bytes()).unwrap();
   let re = Regex::new(r"(\n|\s)+").unwrap();
 
